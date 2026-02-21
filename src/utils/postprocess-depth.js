@@ -35,13 +35,10 @@ export function postProcessDepth(depthData, depthDims, overlaySize) {
   const resizedMat = new cv.Mat();
   cv.resize(depthMat, resizedMat, new cv.Size(overlaySize[0], overlaySize[1]), 0, 0, cv.INTER_LINEAR);
 
-  const imgData = new ImageData(
-    new Uint8ClampedArray(resizedMat.data.buffer, resizedMat.data.byteOffset, resizedMat.data.byteLength),
-    overlaySize[0], overlaySize[1],
-  );
-
+  // Copy pixel data before deleting — resizedMat.data is a view into WASM heap
+  const pixelData = new Uint8ClampedArray(resizedMat.data);
   depthMat.delete();
   resizedMat.delete();
 
-  return imgData;
+  return new ImageData(pixelData, overlaySize[0], overlaySize[1]);
 }

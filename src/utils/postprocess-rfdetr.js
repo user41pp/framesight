@@ -132,10 +132,9 @@ export function postProcessRFDETRMask(filteredResults, masksInfo, overlaySize) {
           const colorScalar = new cv.Scalar(color[0], color[1], color[2], color[3] * 255);
 
           const maskColoredMat = new cv.Mat(targetH, targetW, cv.CV_8UC4, colorScalar);
-          maskColoredMat.copyTo(
-            overlayMat.roi(new cv.Rect(targetX, targetY, targetW, targetH)),
-            maskBinaryU8Mat,
-          );
+          const overlayRoi = overlayMat.roi(new cv.Rect(targetX, targetY, targetW, targetH));
+          maskColoredMat.copyTo(overlayRoi, maskBinaryU8Mat);
+          overlayRoi.delete();
           maskColoredMat.delete();
         }
         maskRoi.delete();
@@ -147,12 +146,10 @@ export function postProcessRFDETRMask(filteredResults, masksInfo, overlaySize) {
     maskBinaryMat.delete();
     maskBinaryU8Mat.delete();
 
-    const imgData = new ImageData(
-      new Uint8ClampedArray(overlayMat.data.buffer, overlayMat.data.byteOffset, overlayMat.data.byteLength),
-      overlaySize[0], overlaySize[1],
-    );
+    // Copy pixel data before deleting — overlayMat.data is a view into WASM heap
+    const pixelData = new Uint8ClampedArray(overlayMat.data);
     overlayMat.delete();
-    return imgData;
+    return new ImageData(pixelData, overlaySize[0], overlaySize[1]);
   } catch (error) {
     console.error('Error processing RF-DETR masks:', error);
     overlayMat.delete();

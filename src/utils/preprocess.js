@@ -34,12 +34,15 @@ export function preProcessRFDETR(srcMat, resolution, overlaySize) {
     }
   }
 
+  // Copy data before deleting the cv.Mat — data32F is a view into WASM heap
+  const dataCopy = new Float32Array(data);
+  preProcessed.delete();
+
   const inputTensor = new Tensor(
     'float32',
-    data,
+    dataCopy,
     [1, 3, resolution[1], resolution[0]],
   );
-  preProcessed.delete();
 
   return inputTensor;
 }
