@@ -18,13 +18,13 @@ No server, no API calls. Your camera feed never leaves your device.
 
 All models are Apache 2.0 licensed.
 
+All models are FP16 quantized for fast download and efficient WebGPU inference.
+
 | Model | Task | Resolution | Size |
 |-------|------|-----------|------|
-| RF-DETR Nano | Detection | 384x384 | 103 MB |
-| RF-DETR Small | Detection | 512x512 | 110 MB |
-| RF-DETR Seg Nano | Segmentation | 312x312 | 117 MB |
-| RF-DETR Seg Small | Segmentation | 384x384 | 118 MB |
-| Depth Anything V2 ViT-S | Depth | 518x518 | 96 MB |
+| RF-DETR Nano | Detection | 384x384 | 52 MB |
+| RF-DETR Seg Nano | Segmentation | 312x312 | 59 MB |
+| Depth Anything V2 ViT-S | Depth | 518x518 | 48 MB |
 
 ## Requirements
 
@@ -52,14 +52,12 @@ ONNX model files are gitignored due to size. Place them in `public/models/`:
 
 ```
 public/models/
-  rfdetr-nano.onnx
-  rfdetr-small.onnx
-  rfdetr-seg-nano.onnx
-  rfdetr-seg-small.onnx
-  depth-anything-v2-vits.onnx
+  rfdetr-nano-fp16.onnx
+  rfdetr-seg-nano-fp16.onnx
+  depth-anything-v2-vits-fp16.onnx
 ```
 
-RF-DETR models are exported from [Roboflow RF-DETR](https://github.com/roboflow/rf-detr). Depth Anything V2 ViT-S is exported from [Depth-Anything-V2](https://github.com/DepthAnything/Depth-Anything-V2) using its `export_onnx.py` script.
+RF-DETR models are exported from [Roboflow RF-DETR](https://github.com/roboflow/rf-detr) and quantized to FP16. Depth Anything V2 ViT-S is exported from [Depth-Anything-V2](https://github.com/DepthAnything/Depth-Anything-V2) using its `export_onnx.py` script, then quantized to FP16.
 
 ## Scripts
 
