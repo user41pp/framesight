@@ -36,6 +36,8 @@ function buildModelConfig(modelId, confidence, backend) {
   };
 }
 
+const EMPTY_TIMING = { decode: 0, preprocess: 0, inference: 0, postprocess: 0, render: 0, total: 0 };
+
 function App() {
   const isEmbedded = useEmbedMode();
 
@@ -47,7 +49,7 @@ function App() {
   const [modelLoading, setModelLoading] = useState(true);
   const [statusMsg, setStatusMsg] = useState('Loading model...');
   const [warmupTime, setWarmupTime] = useState('0');
-  const [inferenceTime, setInferenceTime] = useState('0');
+  const [timing, setTiming] = useState(EMPTY_TIMING);
   const [detections, setDetections] = useState([]);
   const [fps, setFps] = useState(0);
   const [imgSrcState, setImgSrcState] = useState(null);
@@ -69,6 +71,8 @@ function App() {
   }, []);
 
   const handleResult = useCallback((data) => {
+    const renderStart = performance.now();
+
     const overlayCtx = overlayRef.current?.getContext('2d');
     if (!overlayCtx) {
       markDone();
@@ -80,8 +84,20 @@ function App() {
     const config = modelConfigRef.current;
     renderOverlay(data.results, data.maskImageData, overlayCtx, config.task, config.classes);
 
+    const renderTime = +(performance.now() - renderStart).toFixed(1);
+    const totalTime = data.dispatchTime ? +(performance.now() - data.dispatchTime).toFixed(1) : 0;
+
+    const workerTiming = data.timing || {};
+    setTiming({
+      decode: workerTiming.decode || 0,
+      preprocess: workerTiming.preprocess || 0,
+      inference: workerTiming.inference || 0,
+      postprocess: workerTiming.postprocess || 0,
+      render: renderTime,
+      total: totalTime,
+    });
+
     setDetections(data.results || []);
-    setInferenceTime(data.inferenceTime);
     setFps(fpsRef.current);
     markDone();
   }, [markDone, fpsRef]);
@@ -151,7 +167,10 @@ function App() {
       const config = modelConfigRef.current;
       config.overlaySize = [vw, vh];
 
-      postMessage({ type: 'INFERENCE', config, bitmap }, [bitmap]);
+      postMessage(
+        { type: 'INFERENCE', config, bitmap, dispatchTime: performance.now() },
+        [bitmap],
+      );
     } catch {
       markDone();
     }
@@ -168,6 +187,7 @@ function App() {
       setActiveSource(null);
       setDetections([]);
       setFps(0);
+      setTiming(EMPTY_TIMING);
     } else {
       const success = await openCamera();
       if (success) {
@@ -187,6 +207,7 @@ function App() {
     setActiveSource('image');
     setDetections([]);
     setFps(0);
+    setTiming(EMPTY_TIMING);
     setImgSrcState(url);
   }, [stopLoop, closeCamera]);
 
@@ -201,7 +222,10 @@ function App() {
     config.overlaySize = [w, h];
 
     createImageBitmap(imgRef.current).then((bitmap) => {
-      postMessage({ type: 'INFERENCE', config, bitmap }, [bitmap]);
+      postMessage(
+        { type: 'INFERENCE', config, bitmap, dispatchTime: performance.now() },
+        [bitmap],
+      );
     });
   }, [postMessage]);
 
@@ -225,7 +249,7 @@ function App() {
             onCameraLoad={handleCameraLoad}
             onImageLoad={handleImageLoad}
             fps={fps}
-            inferenceTime={inferenceTime}
+            timing={timing}
           />
           <AnimatePresence>
             {modelLoading && <LoadingSpinner />}
@@ -248,7 +272,7 @@ function App() {
 
         <MetricsBar
           warmupTime={warmupTime}
-          inferenceTime={inferenceTime}
+          timing={timing}
           statusMsg={displayStatus}
           modelLoading={modelLoading}
         />

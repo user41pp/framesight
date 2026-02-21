@@ -9,19 +9,22 @@ export async function inferencePipeline(imageData, session, config) {
   const outputTensors = {};
 
   try {
+    const t0 = performance.now();
+
     const srcMat = new cv.Mat(imageData.height, imageData.width, cv.CV_8UC4);
     srcMat.data.set(imageData.data);
     matsToDelete.push(srcMat);
 
     // Pre-process
     inputTensor = preProcessRFDETR(srcMat, config.resolution, config.overlaySize);
+    const t1 = performance.now();
 
     // Inference
     const inputName = config.inputName || 'images';
-    const start = performance.now();
     const outputs = await session.run({ [inputName]: inputTensor });
-    const end = performance.now();
+    const t2 = performance.now();
 
+    // Post-process
     let results, masksData, maskImgData, filteredResults;
 
     if (config.modelFamily === 'rfdetr') {
@@ -70,14 +73,24 @@ export async function inferencePipeline(imageData, session, config) {
       filteredResults = [];
     }
 
+    const t3 = performance.now();
+
     return {
       results: filteredResults || [],
       maskImageData: maskImgData || null,
-      inferenceTime: (end - start).toFixed(2),
+      timing: {
+        preprocess: +(t1 - t0).toFixed(1),
+        inference: +(t2 - t1).toFixed(1),
+        postprocess: +(t3 - t2).toFixed(1),
+      },
     };
   } catch (error) {
     console.error('Inference error:', error);
-    return { results: [], maskImageData: null, inferenceTime: '0' };
+    return {
+      results: [],
+      maskImageData: null,
+      timing: { preprocess: 0, inference: 0, postprocess: 0 },
+    };
   } finally {
     matsToDelete.forEach((mat) => {
       if (mat && !mat.isDeleted()) mat.delete();

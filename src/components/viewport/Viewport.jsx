@@ -4,7 +4,7 @@ import ViewportEmpty from './ViewportEmpty';
 import ViewportOverlay from './ViewportOverlay';
 
 const Viewport = forwardRef(function Viewport(
-  { cameraRef, imgRef, overlayRef, imgSrc, activeSource, onCameraLoad, onImageLoad, fps, inferenceTime },
+  { cameraRef, imgRef, overlayRef, imgSrc, activeSource, onCameraLoad, onImageLoad, fps, timing },
   ref
 ) {
   const showEmpty = activeSource === null;
@@ -57,7 +57,7 @@ const Viewport = forwardRef(function Viewport(
       <canvas ref={overlayRef} />
 
       {/* Metrics HUD */}
-      <ViewportOverlay fps={fps} inferenceTime={inferenceTime} activeSource={activeSource} />
+      <ViewportOverlay fps={fps} timing={timing} activeSource={activeSource} />
     </motion.div>
   );
 });

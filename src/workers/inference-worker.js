@@ -6,7 +6,7 @@ const offscreen = new OffscreenCanvas(0, 0);
 const ctx = offscreen.getContext('2d', { willReadFrequently: true });
 
 self.addEventListener('message', async (event) => {
-  const { type, config, bitmap } = event.data;
+  const { type, config, bitmap, dispatchTime } = event.data;
   const modelKey = `${config.model}-${config.task}-${config.backend}`;
 
   switch (type) {
@@ -52,16 +52,20 @@ self.addEventListener('message', async (event) => {
           type: 'RESULT',
           results: [],
           maskImageData: null,
-          inferenceTime: '0',
+          timing: { preprocess: 0, inference: 0, postprocess: 0, decode: 0 },
+          dispatchTime,
         });
         break;
       }
 
+      // Decode bitmap to ImageData
+      const t0 = performance.now();
       offscreen.width = bitmap.width;
       offscreen.height = bitmap.height;
       ctx.drawImage(bitmap, 0, 0);
       const imageData = ctx.getImageData(0, 0, bitmap.width, bitmap.height);
       bitmap.close();
+      const decodeTime = +(performance.now() - t0).toFixed(1);
 
       const result = await inferencePipeline(imageData, session, config);
 
@@ -69,7 +73,8 @@ self.addEventListener('message', async (event) => {
         type: 'RESULT',
         results: result.results,
         maskImageData: result.maskImageData,
-        inferenceTime: result.inferenceTime,
+        timing: { decode: decodeTime, ...result.timing },
+        dispatchTime,
       });
       break;
     }

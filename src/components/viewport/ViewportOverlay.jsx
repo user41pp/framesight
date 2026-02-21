@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 
-export default function ViewportOverlay({ fps, inferenceTime, activeSource }) {
+export default function ViewportOverlay({ fps, timing, activeSource }) {
   if (!activeSource) return null;
 
   return (
@@ -11,19 +11,29 @@ export default function ViewportOverlay({ fps, inferenceTime, activeSource }) {
         exit={{ opacity: 0, x: 10 }}
         className="absolute top-3 right-3 z-10"
       >
-        <div className="bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/50 font-mono text-xs space-y-0.5">
+        <div className="bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/50 font-mono text-[11px] leading-relaxed">
           {activeSource === 'camera' && (
-            <div className="flex items-center gap-2">
-              <span className="text-text-muted">FPS</span>
-              <span className="text-cyan-light font-semibold">{fps}</span>
-            </div>
+            <Row label="FPS" value={fps} color="text-cyan-light" />
           )}
-          <div className="flex items-center gap-2">
-            <span className="text-text-muted">Inference</span>
-            <span className="text-accent-light font-semibold">{inferenceTime}ms</span>
-          </div>
+          {timing.total > 0 && (
+            <Row label="Total" value={`${timing.total}ms`} color="text-text" />
+          )}
+          <Row label="Model" value={`${timing.inference}ms`} color="text-accent-light" />
+          <Row label="Pre" value={`${timing.preprocess}ms`} color="text-text-dim" />
+          <Row label="Post" value={`${timing.postprocess}ms`} color="text-text-dim" />
+          <Row label="Decode" value={`${timing.decode}ms`} color="text-text-dim" />
+          <Row label="Render" value={`${timing.render}ms`} color="text-text-dim" />
         </div>
       </motion.div>
     </AnimatePresence>
+  );
+}
+
+function Row({ label, value, color }) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <span className="text-text-muted">{label}</span>
+      <span className={`font-semibold ${color}`}>{value}</span>
+    </div>
   );
 }
