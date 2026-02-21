@@ -150,7 +150,10 @@ function App() {
 
   // --- Camera frame dispatch ---
   const dispatchFrame = useCallback(async () => {
-    if (!cameraRef.current || cameraRef.current.readyState < 2) return;
+    if (!cameraRef.current || cameraRef.current.readyState < 2) {
+      markDone();
+      return;
+    }
 
     try {
       const bitmap = await createImageBitmap(cameraRef.current);

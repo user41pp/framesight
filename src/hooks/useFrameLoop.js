@@ -28,6 +28,7 @@ export function useFrameLoop() {
   const start = useCallback((onFrame) => {
     onFrameRef.current = onFrame;
     isRunningRef.current = true;
+    isProcessingRef.current = false;
     frameTimesRef.current = [];
     fpsRef.current = 0;
 
