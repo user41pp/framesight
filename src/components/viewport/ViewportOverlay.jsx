@@ -12,28 +12,18 @@ export default function ViewportOverlay({ fps, timing, activeSource }) {
         className="absolute top-3 right-3 z-10"
       >
         <div className="bg-black/70 backdrop-blur-sm rounded-lg px-3 py-2 border border-border/50 font-mono text-[11px] leading-relaxed">
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-text-muted">Model</span>
+            <span className="font-semibold text-accent-light">{timing.inference}ms</span>
+          </div>
           {activeSource === 'camera' && (
-            <Row label="FPS" value={fps} color="text-cyan-light" />
+            <div className="flex items-center justify-between gap-4">
+              <span className="text-text-muted">FPS</span>
+              <span className="font-semibold text-cyan-light">{fps}</span>
+            </div>
           )}
-          {timing.total > 0 && (
-            <Row label="Total" value={`${timing.total}ms`} color="text-text" />
-          )}
-          <Row label="Model" value={`${timing.inference}ms`} color="text-accent-light" />
-          <Row label="Pre" value={`${timing.preprocess}ms`} color="text-text-dim" />
-          <Row label="Post" value={`${timing.postprocess}ms`} color="text-text-dim" />
-          <Row label="Decode" value={`${timing.decode}ms`} color="text-text-dim" />
-          <Row label="Render" value={`${timing.render}ms`} color="text-text-dim" />
         </div>
       </motion.div>
     </AnimatePresence>
-  );
-}
-
-function Row({ label, value, color }) {
-  return (
-    <div className="flex items-center justify-between gap-4">
-      <span className="text-text-muted">{label}</span>
-      <span className={`font-semibold ${color}`}>{value}</span>
-    </div>
   );
 }
