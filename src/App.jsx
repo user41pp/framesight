@@ -40,6 +40,19 @@ const EMPTY_TIMING = { decode: 0, preprocess: 0, inference: 0, postprocess: 0, r
 
 function App() {
   const isEmbedded = useEmbedMode();
+  const [webgpuSupported, setWebgpuSupported] = useState(() => {
+    if (typeof navigator === 'undefined' || !navigator.gpu) return false;
+    return null; // unknown until adapter check completes
+  });
+
+  useEffect(() => {
+    if (webgpuSupported !== null) return;
+    navigator.gpu.requestAdapter().then((adapter) => {
+      setWebgpuSupported(!!adapter);
+    }).catch(() => {
+      setWebgpuSupported(false);
+    });
+  }, [webgpuSupported]);
 
   // --- State ---
   const [selectedModelId, setSelectedModelId] = useState(DEFAULT_MODEL_ID);
@@ -126,10 +139,12 @@ function App() {
     postMessage({ type: 'LOAD_MODEL', config });
   }, [confidence, postMessage]);
 
-  // Initial model load on mount
+  // Initial model load on mount (only if WebGPU is available)
   useEffect(() => {
-    postMessage({ type: 'LOAD_MODEL', config: modelConfigRef.current });
-  }, [postMessage]);
+    if (webgpuSupported) {
+      postMessage({ type: 'LOAD_MODEL', config: modelConfigRef.current });
+    }
+  }, [postMessage, webgpuSupported]);
 
   // Model change — stop loop, clear stale overlay, load new model
   const handleModelChange = useCallback((newId) => {
@@ -256,6 +271,38 @@ function App() {
 
   const selectedModel = getModelById(selectedModelId);
   const currentTask = selectedModel?.task || 'detect';
+
+  if (webgpuSupported === false) {
+    return (
+      <div className={`min-h-screen ${isEmbedded ? 'bg-void' : ''}`}>
+        {!isEmbedded && <GlowBackground />}
+        <div className={`max-w-5xl mx-auto ${isEmbedded ? 'px-2 py-2' : 'px-4 sm:px-6 py-2'}`}>
+          {!isEmbedded && <Header />}
+          <div className="glass-panel p-8 mt-4 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-surface-light border border-border flex items-center justify-center mb-4 mx-auto">
+              <svg className="w-8 h-8 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126z" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M12 15.75h.007v.008H12v-.008z" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-semibold text-text mb-2">WebGPU Not Available</h2>
+            <p className="text-text-dim text-sm max-w-md mx-auto mb-4">
+              FrameSight requires WebGPU for real-time ML inference. Your browser or device does not support it yet.
+            </p>
+            <div className="text-left text-xs text-text-muted max-w-sm mx-auto space-y-2">
+              <p className="font-medium text-text-dim">To fix this:</p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>Use Chrome 113+ or Edge 113+ on desktop</li>
+                <li>On Android, try enabling <span className="font-mono text-accent-light">chrome://flags/#enable-unsafe-webgpu</span></li>
+                <li>Safari 18+ on macOS also supports WebGPU</li>
+              </ul>
+            </div>
+          </div>
+          {!isEmbedded && <Footer />}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen ${isEmbedded ? 'bg-void' : ''}`}>
