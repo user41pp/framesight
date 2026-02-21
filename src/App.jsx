@@ -41,7 +41,7 @@ function App() {
 
   // --- State ---
   const [selectedModelId, setSelectedModelId] = useState(DEFAULT_MODEL_ID);
-  const [backend, setBackend] = useState('wasm');
+  const [backend, setBackend] = useState('webgpu');
   const [confidence, setConfidence] = useState(0.45);
   const [activeSource, setActiveSource] = useState(null);
   const [modelLoading, setModelLoading] = useState(true);
@@ -56,7 +56,7 @@ function App() {
   const cameraRef = useRef(null);
   const imgRef = useRef(null);
   const overlayRef = useRef(null);
-  const modelConfigRef = useRef(buildModelConfig(DEFAULT_MODEL_ID, 0.45, 'wasm'));
+  const modelConfigRef = useRef(buildModelConfig(DEFAULT_MODEL_ID, 0.45, 'webgpu'));
 
   // --- Frame loop ---
   const { start: startLoop, stop: stopLoop, markDone, fpsRef } = useFrameLoop();
