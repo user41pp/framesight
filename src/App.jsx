@@ -112,7 +112,6 @@ function App() {
     onResult: handleResult,
     onError: handleError,
   });
-
   const { openCamera, closeCamera, cameraStatus } = useWebcam(cameraRef);
 
   // Derived status: camera status overrides when active
@@ -132,10 +131,15 @@ function App() {
     postMessage({ type: 'LOAD_MODEL', config: modelConfigRef.current });
   }, [postMessage]);
 
-  // Model/backend change handlers - load directly
+  // Model change — stop loop, clear stale overlay, load new model
   const handleModelChange = useCallback((newId) => {
     stopLoop();
     setSelectedModelId(newId);
+    setDetections([]);
+    setTiming(EMPTY_TIMING);
+    if (overlayRef.current) {
+      overlayRef.current.getContext('2d')?.clearRect(0, 0, overlayRef.current.width, overlayRef.current.height);
+    }
     loadModelWith(newId, backend);
   }, [stopLoop, backend, loadModelWith]);
 
@@ -169,6 +173,30 @@ function App() {
       markDone();
     }
   }, [postMessage, markDone]);
+
+  // Resume inference after model switch completes
+  useEffect(() => {
+    if (modelLoading) return;
+
+    if (activeSource === 'camera') {
+      startLoop(dispatchFrame);
+    } else if (activeSource === 'image' && imgRef.current) {
+      const w = imgRef.current.naturalWidth;
+      const h = imgRef.current.naturalHeight;
+      if (overlayRef.current) {
+        overlayRef.current.width = w;
+        overlayRef.current.height = h;
+      }
+      const config = modelConfigRef.current;
+      config.overlaySize = [w, h];
+      createImageBitmap(imgRef.current).then((bitmap) => {
+        postMessage(
+          { type: 'INFERENCE', config, bitmap, dispatchTime: performance.now() },
+          [bitmap],
+        );
+      });
+    }
+  }, [modelLoading, activeSource, startLoop, dispatchFrame, postMessage]);
 
   // --- Camera toggle ---
   const handleToggleCamera = useCallback(async () => {
