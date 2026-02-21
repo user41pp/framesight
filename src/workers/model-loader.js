@@ -30,13 +30,7 @@ export async function modelLoader(modelPath, backend, numThreads = 1, config = {
   try {
     session = await InferenceSession.create(modelBuffer, sessionOptions);
   } catch (e) {
-    if (backend === 'wasm' && env.wasm.simd) {
-      console.warn('Retrying without SIMD...');
-      env.wasm.simd = false;
-      session = await InferenceSession.create(modelBuffer, sessionOptions);
-    } else {
-      throw e;
-    }
+    throw new Error(`[${backend}] ${e.message}`);
   }
 
   // Warmup run
