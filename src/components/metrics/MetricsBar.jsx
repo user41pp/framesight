@@ -9,7 +9,7 @@ export default function MetricsBar({ warmupTime, timing, statusMsg, modelLoading
       transition={{ duration: 0.4, delay: 0.3 }}
       className="space-y-3 mt-4"
     >
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
         <MetricCard
           label="Status"
           value={statusMsg}
@@ -35,27 +35,27 @@ export default function MetricsBar({ warmupTime, timing, statusMsg, modelLoading
           color="text-cyan-light"
         />
       </div>
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-4 gap-2 sm:gap-3">
         <MetricCard
-          label="Decode"
+          label="Dec"
           value={timing.decode}
           unit="ms"
           color="text-text-dim"
         />
         <MetricCard
-          label="Preprocess"
+          label="Pre"
           value={timing.preprocess}
           unit="ms"
           color="text-text-dim"
         />
         <MetricCard
-          label="Postprocess"
+          label="Post"
           value={timing.postprocess}
           unit="ms"
           color="text-text-dim"
         />
         <MetricCard
-          label="Render"
+          label="Draw"
           value={timing.render}
           unit="ms"
           color="text-text-dim"
