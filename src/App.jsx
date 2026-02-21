@@ -43,7 +43,7 @@ function App() {
 
   // --- State ---
   const [selectedModelId, setSelectedModelId] = useState(DEFAULT_MODEL_ID);
-  const [backend, setBackend] = useState('webgpu');
+  const backend = 'webgpu';
   const [confidence, setConfidence] = useState(0.45);
   const [activeSource, setActiveSource] = useState(null);
   const [modelLoading, setModelLoading] = useState(true);
@@ -138,12 +138,6 @@ function App() {
     setSelectedModelId(newId);
     loadModelWith(newId, backend);
   }, [stopLoop, backend, loadModelWith]);
-
-  const handleBackendChange = useCallback((newBackend) => {
-    stopLoop();
-    setBackend(newBackend);
-    loadModelWith(selectedModelId, newBackend);
-  }, [stopLoop, selectedModelId, loadModelWith]);
 
   // Keep config ref's confidence updated
   useEffect(() => {
@@ -262,8 +256,6 @@ function App() {
           onUploadImage={handleUploadImage}
           selectedModel={selectedModelId}
           onModelChange={handleModelChange}
-          backend={backend}
-          onBackendChange={handleBackendChange}
           confidence={confidence}
           onConfidenceChange={setConfidence}
           modelLoading={modelLoading}
