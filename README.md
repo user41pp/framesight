@@ -48,16 +48,16 @@ The app serves at `http://localhost:5173/framesight/`.
 
 ### Models Setup
 
-ONNX model files are gitignored due to size. Place them in `public/models/`:
+ONNX model files are gitignored on `main` due to size, but included in the `gh-pages` deployment branch. For local development, download the FP16 models and place them in `public/models/`:
 
 ```
 public/models/
-  rfdetr-nano-fp16.onnx
-  rfdetr-seg-nano-fp16.onnx
-  depth-anything-v2-vits-fp16.onnx
+  rfdetr-nano-fp16.onnx        (52 MB)
+  rfdetr-seg-nano-fp16.onnx    (59 MB)
+  depth-anything-v2-vits-fp16.onnx  (48 MB)
 ```
 
-RF-DETR models are exported from [Roboflow RF-DETR](https://github.com/roboflow/rf-detr) and quantized to FP16. Depth Anything V2 ViT-S is exported from [Depth-Anything-V2](https://github.com/DepthAnything/Depth-Anything-V2) using its `export_onnx.py` script, then quantized to FP16.
+RF-DETR models are exported from [Roboflow RF-DETR](https://github.com/roboflow/rf-detr), Depth Anything V2 ViT-S from [Depth-Anything-V2](https://github.com/DepthAnything/Depth-Anything-V2). All quantized to FP16 via `onnxconverter-common`.
 
 ## Scripts
 
