@@ -6,7 +6,7 @@ export const MODELS = [
     family: 'rfdetr',
     task: 'detect',
     resolution: [384, 384],
-    inputName: 'images',
+    inputName: 'input',
     license: 'Apache-2.0',
   },
   {
@@ -16,7 +16,7 @@ export const MODELS = [
     family: 'rfdetr',
     task: 'detect',
     resolution: [512, 512],
-    inputName: 'images',
+    inputName: 'input',
     license: 'Apache-2.0',
   },
   {
@@ -26,7 +26,7 @@ export const MODELS = [
     family: 'rfdetr',
     task: 'seg',
     resolution: [312, 312],
-    inputName: 'images',
+    inputName: 'input',
     license: 'Apache-2.0',
   },
   {
@@ -36,7 +36,7 @@ export const MODELS = [
     family: 'rfdetr',
     task: 'seg',
     resolution: [384, 384],
-    inputName: 'images',
+    inputName: 'input',
     license: 'Apache-2.0',
   },
   {
