@@ -17,6 +17,8 @@ export default function Footer() {
         <span className="text-text-dim">Depth Anything V2</span>
         {' '}&middot;{' '}
         Apache 2.0
+        {' '}&middot;{' '}
+        <span className="font-mono">v{__APP_VERSION__}</span>
       </p>
     </footer>
   );

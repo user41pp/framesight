@@ -28,7 +28,7 @@ export default function Header() {
           GitHub
         </a>
         <span className="text-border">|</span>
-        <span className="text-xs text-text-muted font-mono">WebGPU + WASM</span>
+        <span className="text-xs text-text-muted font-mono">v{__APP_VERSION__}</span>
       </div>
     </motion.header>
   );
