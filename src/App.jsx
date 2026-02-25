@@ -4,6 +4,7 @@ import { AnimatePresence } from 'framer-motion';
 import classes from './config/coco-classes.json';
 import { DEFAULT_MODEL_ID, getModelById } from './config/models';
 import { renderOverlay } from './utils/render-overlay';
+import { extractVideoId, fetchStreamUrl } from './utils/youtube';
 
 import { useEmbedMode } from './hooks/useEmbedMode';
 import { useInferenceWorker } from './hooks/useInferenceWorker';
@@ -70,6 +71,7 @@ function App() {
   // --- Refs ---
   const cameraRef = useRef(null);
   const imgRef = useRef(null);
+  const youtubeRef = useRef(null);
   const overlayRef = useRef(null);
   const modelConfigRef = useRef(buildModelConfig(DEFAULT_MODEL_ID, 0.45, 'webgpu'));
 
@@ -192,12 +194,43 @@ function App() {
     }
   }, [postMessage, markDone]);
 
+  // --- YouTube frame dispatch ---
+  const dispatchYouTubeFrame = useCallback(async () => {
+    if (!youtubeRef.current || youtubeRef.current.readyState < 2) {
+      markDone();
+      return;
+    }
+
+    try {
+      const bitmap = await createImageBitmap(youtubeRef.current);
+      const vw = youtubeRef.current.videoWidth;
+      const vh = youtubeRef.current.videoHeight;
+
+      if (overlayRef.current.width !== vw || overlayRef.current.height !== vh) {
+        overlayRef.current.width = vw;
+        overlayRef.current.height = vh;
+      }
+
+      const config = modelConfigRef.current;
+      config.overlaySize = [vw, vh];
+
+      postMessage(
+        { type: 'INFERENCE', config, bitmap, dispatchTime: performance.now() },
+        [bitmap],
+      );
+    } catch {
+      markDone();
+    }
+  }, [postMessage, markDone]);
+
   // Resume inference after model switch completes
   useEffect(() => {
     if (modelLoading) return;
 
     if (activeSource === 'camera') {
       startLoop(dispatchFrame);
+    } else if (activeSource === 'youtube') {
+      startLoop(dispatchYouTubeFrame);
     } else if (activeSource === 'image' && imgRef.current) {
       const w = imgRef.current.naturalWidth;
       const h = imgRef.current.naturalHeight;
@@ -214,7 +247,7 @@ function App() {
         );
       });
     }
-  }, [modelLoading, activeSource, startLoop, dispatchFrame, postMessage]);
+  }, [modelLoading, activeSource, startLoop, dispatchFrame, dispatchYouTubeFrame, postMessage]);
 
   // --- Camera toggle ---
   const handleToggleCamera = useCallback(async () => {
@@ -229,6 +262,12 @@ function App() {
       setFps(0);
       setTiming(EMPTY_TIMING);
     } else {
+      // Stop YouTube if playing
+      if (youtubeRef.current) {
+        youtubeRef.current.pause();
+        youtubeRef.current.removeAttribute('src');
+        youtubeRef.current.load();
+      }
       const success = await openCamera();
       if (success) {
         setActiveSource('camera');
@@ -255,6 +294,11 @@ function App() {
   const handleUploadImage = useCallback((url) => {
     stopLoop();
     closeCamera();
+    if (youtubeRef.current) {
+      youtubeRef.current.pause();
+      youtubeRef.current.removeAttribute('src');
+      youtubeRef.current.load();
+    }
     setActiveSource('image');
     setDetections([]);
     setFps(0);
@@ -279,6 +323,44 @@ function App() {
       );
     });
   }, [postMessage]);
+
+  // --- YouTube ---
+  const handleLoadYouTube = useCallback(async (url) => {
+    stopLoop();
+    closeCamera();
+    setDetections([]);
+    setFps(0);
+    setTiming(EMPTY_TIMING);
+    if (overlayRef.current) {
+      overlayRef.current.getContext('2d')?.clearRect(0, 0, overlayRef.current.width, overlayRef.current.height);
+    }
+
+    const videoId = extractVideoId(url);
+    if (!videoId) {
+      setStatusMsg('Invalid YouTube URL');
+      setActiveSource(null);
+      return;
+    }
+
+    setActiveSource('youtube');
+    setStatusMsg('Resolving YouTube stream...');
+
+    try {
+      const streamUrl = await fetchStreamUrl(videoId);
+      if (youtubeRef.current) {
+        youtubeRef.current.src = streamUrl;
+        youtubeRef.current.play().catch(() => {});
+      }
+    } catch (err) {
+      setStatusMsg(`YouTube error: ${err.message}`);
+      setActiveSource(null);
+    }
+  }, [stopLoop, closeCamera]);
+
+  const handleYouTubeReady = useCallback(() => {
+    setStatusMsg('YouTube stream active');
+    startLoop(dispatchYouTubeFrame);
+  }, [startLoop, dispatchYouTubeFrame]);
 
   const selectedModel = getModelById(selectedModelId);
   const currentTask = selectedModel?.task || 'detect';
@@ -326,11 +408,13 @@ function App() {
           <Viewport
             cameraRef={cameraRef}
             imgRef={imgRef}
+            youtubeRef={youtubeRef}
             overlayRef={overlayRef}
             imgSrc={imgSrcState}
             activeSource={activeSource}
             onCameraLoad={handleCameraLoad}
             onImageLoad={handleImageLoad}
+            onYouTubeReady={handleYouTubeReady}
             onStartCamera={handleToggleCamera}
             fps={fps}
             timing={timing}
@@ -344,6 +428,7 @@ function App() {
           activeSource={activeSource}
           onToggleCamera={handleToggleCamera}
           onUploadImage={handleUploadImage}
+          onLoadYouTube={handleLoadYouTube}
           selectedModel={selectedModelId}
           onModelChange={handleModelChange}
           confidence={confidence}

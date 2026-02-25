@@ -16,7 +16,7 @@ export default function ViewportOverlay({ fps, timing, activeSource }) {
             <span className="text-text-muted">Model</span>
             <span className="font-semibold text-accent-light">{timing.inference}ms</span>
           </div>
-          {activeSource === 'camera' && (
+          {(activeSource === 'camera' || activeSource === 'youtube') && (
             <div className="flex items-center justify-between gap-4">
               <span className="text-text-muted">FPS</span>
               <span className="font-semibold text-cyan-light">{fps}</span>
