@@ -240,6 +240,17 @@ function App() {
     startLoop(dispatchFrame);
   }, [startLoop, dispatchFrame]);
 
+  // Listen for postMessage from parent iframe (e.g. homepage)
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.data?.action === 'startCamera') {
+        handleToggleCamera();
+      }
+    };
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, [handleToggleCamera]);
+
   // --- Image upload ---
   const handleUploadImage = useCallback((url) => {
     stopLoop();
@@ -320,6 +331,7 @@ function App() {
             activeSource={activeSource}
             onCameraLoad={handleCameraLoad}
             onImageLoad={handleImageLoad}
+            onStartCamera={handleToggleCamera}
             fps={fps}
             timing={timing}
           />

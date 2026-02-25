@@ -4,7 +4,7 @@ import ViewportEmpty from './ViewportEmpty';
 import ViewportOverlay from './ViewportOverlay';
 
 const Viewport = forwardRef(function Viewport(
-  { cameraRef, imgRef, overlayRef, imgSrc, activeSource, onCameraLoad, onImageLoad, fps, timing },
+  { cameraRef, imgRef, overlayRef, imgSrc, activeSource, onCameraLoad, onImageLoad, onStartCamera, fps, timing },
   ref
 ) {
   const showEmpty = activeSource === null;
@@ -27,7 +27,7 @@ const Viewport = forwardRef(function Viewport(
             transition={{ duration: 0.2 }}
             className="absolute inset-0"
           >
-            <ViewportEmpty />
+            <ViewportEmpty onStartCamera={onStartCamera} />
           </motion.div>
         )}
       </AnimatePresence>
