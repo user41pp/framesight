@@ -70,6 +70,7 @@ function App() {
   // --- Refs ---
   const cameraRef = useRef(null);
   const imgRef = useRef(null);
+  const videoRef = useRef(null);
   const overlayRef = useRef(null);
   const modelConfigRef = useRef(buildModelConfig(DEFAULT_MODEL_ID, 0.45, 'webgpu'));
 
@@ -192,12 +193,43 @@ function App() {
     }
   }, [postMessage, markDone]);
 
+  // --- Video frame dispatch ---
+  const dispatchVideoFrame = useCallback(async () => {
+    if (!videoRef.current || videoRef.current.readyState < 2) {
+      markDone();
+      return;
+    }
+
+    try {
+      const bitmap = await createImageBitmap(videoRef.current);
+      const vw = videoRef.current.videoWidth;
+      const vh = videoRef.current.videoHeight;
+
+      if (overlayRef.current.width !== vw || overlayRef.current.height !== vh) {
+        overlayRef.current.width = vw;
+        overlayRef.current.height = vh;
+      }
+
+      const config = modelConfigRef.current;
+      config.overlaySize = [vw, vh];
+
+      postMessage(
+        { type: 'INFERENCE', config, bitmap, dispatchTime: performance.now() },
+        [bitmap],
+      );
+    } catch {
+      markDone();
+    }
+  }, [postMessage, markDone]);
+
   // Resume inference after model switch completes
   useEffect(() => {
     if (modelLoading) return;
 
     if (activeSource === 'camera') {
       startLoop(dispatchFrame);
+    } else if (activeSource === 'video') {
+      startLoop(dispatchVideoFrame);
     } else if (activeSource === 'image' && imgRef.current) {
       const w = imgRef.current.naturalWidth;
       const h = imgRef.current.naturalHeight;
@@ -214,7 +246,7 @@ function App() {
         );
       });
     }
-  }, [modelLoading, activeSource, startLoop, dispatchFrame, postMessage]);
+  }, [modelLoading, activeSource, startLoop, dispatchFrame, dispatchVideoFrame, postMessage]);
 
   // --- Camera toggle ---
   const handleToggleCamera = useCallback(async () => {
@@ -229,6 +261,12 @@ function App() {
       setFps(0);
       setTiming(EMPTY_TIMING);
     } else {
+      stopLoop();
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.removeAttribute('src');
+        videoRef.current.load();
+      }
       const success = await openCamera();
       if (success) {
         setActiveSource('camera');
@@ -255,6 +293,11 @@ function App() {
   const handleUploadImage = useCallback((url) => {
     stopLoop();
     closeCamera();
+    if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.removeAttribute('src');
+      videoRef.current.load();
+    }
     setActiveSource('image');
     setDetections([]);
     setFps(0);
@@ -279,6 +322,27 @@ function App() {
       );
     });
   }, [postMessage]);
+
+  // --- Video load ---
+  const handleLoadVideo = useCallback((url) => {
+    stopLoop();
+    closeCamera();
+    setActiveSource('video');
+    setDetections([]);
+    setFps(0);
+    setTiming(EMPTY_TIMING);
+    if (overlayRef.current) {
+      overlayRef.current.getContext('2d')?.clearRect(0, 0, overlayRef.current.width, overlayRef.current.height);
+    }
+    if (videoRef.current) {
+      videoRef.current.src = url;
+      videoRef.current.play();
+    }
+  }, [stopLoop, closeCamera]);
+
+  const handleVideoReady = useCallback(() => {
+    startLoop(dispatchVideoFrame);
+  }, [startLoop, dispatchVideoFrame]);
 
   const selectedModel = getModelById(selectedModelId);
   const currentTask = selectedModel?.task || 'detect';
@@ -326,11 +390,13 @@ function App() {
           <Viewport
             cameraRef={cameraRef}
             imgRef={imgRef}
+            videoRef={videoRef}
             overlayRef={overlayRef}
             imgSrc={imgSrcState}
             activeSource={activeSource}
             onCameraLoad={handleCameraLoad}
             onImageLoad={handleImageLoad}
+            onVideoReady={handleVideoReady}
             onStartCamera={handleToggleCamera}
             fps={fps}
             timing={timing}
@@ -344,6 +410,7 @@ function App() {
           activeSource={activeSource}
           onToggleCamera={handleToggleCamera}
           onUploadImage={handleUploadImage}
+          onLoadVideo={handleLoadVideo}
           selectedModel={selectedModelId}
           onModelChange={handleModelChange}
           confidence={confidence}

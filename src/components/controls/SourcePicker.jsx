@@ -1,8 +1,9 @@
 import { useRef } from 'react';
 import GlowButton from '../shared/GlowButton';
 
-export default function SourcePicker({ activeSource, onToggleCamera, onUploadImage }) {
+export default function SourcePicker({ activeSource, onToggleCamera, onUploadImage, onLoadVideo }) {
   const fileRef = useRef(null);
+  const videoFileRef = useRef(null);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -11,6 +12,23 @@ export default function SourcePicker({ activeSource, onToggleCamera, onUploadIma
       onUploadImage(url);
     }
     e.target.value = '';
+  };
+
+  const handleVideoFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      onLoadVideo(url);
+    }
+    e.target.value = '';
+  };
+
+  const handleVideoClick = () => {
+    if (activeSource === 'video') {
+      videoFileRef.current?.click();
+    } else {
+      onLoadVideo(`${import.meta.env.BASE_URL}videos/Parkour_cut_8-31s.mp4`);
+    }
   };
 
   return (
@@ -25,6 +43,18 @@ export default function SourcePicker({ activeSource, onToggleCamera, onUploadIma
         }
       >
         Camera
+      </GlowButton>
+
+      <GlowButton
+        active={activeSource === 'video'}
+        onClick={handleVideoClick}
+        icon={
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M5 3l14 9-14 9V3z" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        }
+      >
+        Video
       </GlowButton>
 
       <GlowButton
@@ -44,6 +74,13 @@ export default function SourcePicker({ activeSource, onToggleCamera, onUploadIma
         type="file"
         accept="image/*"
         onChange={handleFileChange}
+        className="hidden"
+      />
+      <input
+        ref={videoFileRef}
+        type="file"
+        accept="video/*"
+        onChange={handleVideoFileChange}
         className="hidden"
       />
     </div>

@@ -7,6 +7,7 @@ export default function ControlBar({
   activeSource,
   onToggleCamera,
   onUploadImage,
+  onLoadVideo,
   selectedModel,
   onModelChange,
   confidence,
@@ -26,6 +27,7 @@ export default function ControlBar({
           activeSource={activeSource}
           onToggleCamera={onToggleCamera}
           onUploadImage={onUploadImage}
+          onLoadVideo={onLoadVideo}
         />
 
         <div className="hidden sm:block w-px h-8 bg-border" />

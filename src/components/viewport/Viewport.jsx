@@ -4,7 +4,7 @@ import ViewportEmpty from './ViewportEmpty';
 import ViewportOverlay from './ViewportOverlay';
 
 const Viewport = forwardRef(function Viewport(
-  { cameraRef, imgRef, overlayRef, imgSrc, activeSource, onCameraLoad, onImageLoad, onStartCamera, fps, timing },
+  { cameraRef, imgRef, videoRef, overlayRef, imgSrc, activeSource, onCameraLoad, onImageLoad, onVideoReady, onStartCamera, fps, timing },
   ref
 ) {
   const showEmpty = activeSource === null;
@@ -40,6 +40,16 @@ const Viewport = forwardRef(function Viewport(
         muted
         onLoadedData={onCameraLoad}
         className={activeSource === 'camera' ? '' : 'hidden'}
+      />
+
+      {/* Video feed */}
+      <video
+        ref={videoRef}
+        loop
+        playsInline
+        muted
+        onLoadedData={onVideoReady}
+        className={activeSource === 'video' ? '' : 'hidden'}
       />
 
       {/* Static image */}
